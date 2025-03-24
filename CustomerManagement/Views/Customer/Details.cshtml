@@ -1,0 +1,109 @@
+@model CustomerManagement.Models.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Detalhes do Cliente";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary bg-gradient d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-user me-2"></i>Detalhes do Cliente
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informações Básicas</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-md-4">@Html.DisplayNameFor(model => model.Name)</dt>
+                                <dd class="col-md-8">@Html.DisplayFor(model => model.Name)</dd>
+                                
+                                <dt class="col-md-4">@Html.DisplayNameFor(model => model.Type)</dt>
+                                <dd class="col-md-8">@(Model.Type == CustomerManagement.Domain.Entities.CustomerType.PF ? "Pessoa Física" : "Pessoa Jurídica")</dd>
+                                
+                                <dt class="col-md-4">@(Model.Type == CustomerManagement.Domain.Entities.CustomerType.PF ? "CPF" : "CNPJ")</dt>
+                                <dd class="col-md-8">@Model.Document</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Informações de Contato</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-md-4">@Html.DisplayNameFor(model => model.Phone)</dt>
+                                <dd class="col-md-8">@Html.DisplayFor(model => model.Phone)</dd>
+                                
+                                <dt class="col-md-4">@Html.DisplayNameFor(model => model.RegistrationDate)</dt>
+                                <dd class="col-md-8">@Model.RegistrationDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i>Editar
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Voltar
+            </a>
+            <button type="button" class="btn btn-danger ms-auto" data-bs-toggle="modal" 
+                    data-bs-target="#deleteModal" data-id="@Model.Id" data-name="@Model.Name">
+                <i class="fas fa-trash me-1"></i>Excluir
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal de Exclusão -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusão
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir o cliente <strong id="customerName"></strong>?</p>
+                    <p class="mb-0 text-danger"><em>Esta ação não pode ser desfeita.</em></p>
+                </div>
+                <div class="modal-footer">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" id="customerId" name="id" />
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Excluir
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#deleteModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const id = button.data('id');
+                const name = button.data('name');
+                
+                $('#customerId').val(id);
+                $('#customerName').text('@Model.Name');
+            });
+        });
+    </script>
+} 

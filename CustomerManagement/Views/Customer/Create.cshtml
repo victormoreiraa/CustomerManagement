@@ -1,0 +1,113 @@
+@model CustomerManagement.Models.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Cadastrar Cliente";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Cadastrar Cliente</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="form-label fw-bold"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Type" class="form-label fw-bold"></label>
+                    <select asp-for="Type" class="form-select" id="customerType">
+                        <option value="">Selecione...</option>
+                        <option value="1">Pessoa Física</option>
+                        <option value="2">Pessoa Jurídica</option>
+                    </select>
+                    <span asp-validation-for="Type" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Document" class="form-label fw-bold" id="documentLabel">Documento</label>
+                    <input asp-for="Document" class="form-control" placeholder="Apenas números" autocomplete="off" />
+                    <span asp-validation-for="Document" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Phone" class="form-label fw-bold"></label>
+                    <input asp-for="Phone" class="form-control" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group d-flex justify-content-between mt-4">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    
+    <script>
+        $(document).ready(function () {
+            $('#Phone').mask('(00) 00000-0000');
+            
+            atualizarLabelDocumento();
+            
+            $('#customerType').on('change', function() {
+                atualizarLabelDocumento();
+                $('#Document').val(''); 
+            });
+            
+            function atualizarLabelDocumento() {
+                var tipo = $('#customerType').val();
+                console.log("Tipo selecionado:", tipo);
+                
+                $('#Document').unmask();
+                
+                if (tipo == "1") { 
+                    $('#documentLabel').text('CPF');
+                    $('#Document').attr('placeholder', '000.000.000-00');
+                    $('#Document').mask('000.000.000-00');
+                } else if (tipo == "2") { 
+                    $('#documentLabel').text('CNPJ');
+                    $('#Document').attr('placeholder', '00.000.000/0000-00');
+                    $('#Document').mask('00.000.000/0000-00');
+                } else {
+                    $('#documentLabel').text('Documento');
+                    $('#Document').attr('placeholder', 'Selecione um tipo');
+                }
+            }
+            
+            $('form').submit(function(e) {
+                var tipo = $('#customerType').val();
+                var doc = $('#Document').val().replace(/\D/g, ''); 
+                
+                var mensagemErro = '';
+                
+                if (tipo == "1" && doc.length != 11) {
+                    mensagemErro = 'CPF deve conter 11 dígitos numéricos';
+                } else if (tipo == "2" && doc.length != 14) {
+                    mensagemErro = 'CNPJ deve conter 14 dígitos numéricos';
+                }
+                
+                if (mensagemErro) {
+                    e.preventDefault();
+                    alert(mensagemErro);
+                    return false;
+                }
+            });
+        });
+    </script>
+} 

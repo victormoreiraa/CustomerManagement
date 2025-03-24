@@ -1,0 +1,234 @@
+@model CustomerManagement.Models.CustomerListViewModel
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="container mt-4">
+    @if (TempData["ToastMessage"] != null)
+    {
+        <div class="alert alert-@(TempData["ToastType"]?.ToString() == "success" ? "success" : "danger") alert-dismissible fade show" role="alert">
+            @TempData["ToastMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary bg-gradient text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-users me-2"></i>Lista de Clientes
+            </h4>
+            <a asp-action="Create" class="btn btn-light">
+                <i class="fas fa-plus me-1"></i>Novo Cliente
+            </a>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="mb-4">
+                <div class="input-group">
+                    <input type="text" name="searchTerm" class="form-control" placeholder="Buscar por nome ou documento..." value="@Model.SearchTerm">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Limpar
+                        </a>
+                    }
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Documento</th>
+                            <th>Telefone</th>
+                            <th>Data de Cadastro</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Customers != null && Model.Customers.Any())
+                        {
+                            foreach (var item in Model.Customers)
+                            {
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td>@(item.Type == CustomerManagement.Domain.Entities.CustomerType.PF ? "Pessoa Física" : "Pessoa Jurídica")</td>
+                                    <td class="document-display">@item.Document</td>
+                                    <td class="phone-display">@item.Phone</td>
+                                    <td>@item.RegistrationDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <div class="btn-group d-flex justify-content-center">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning text-white">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn" 
+                                                data-id="@item.Id" 
+                                                data-name="@item.Name"
+                                                data-document="@item.Document"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deleteModal">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-search"></i>
+                                        <h4>Nenhum cliente encontrado</h4>
+                                        <p>Não foram encontrados clientes com os critérios especificados.</p>
+                                        <a asp-action="Create" class="btn btn-primary">
+                                            <i class="fas fa-plus me-1"></i>Cadastrar Novo Cliente
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                    Mostrando @(((Model.PageIndex - 1) * Model.PageSize) + 1) a 
+                    @(Math.Min(Model.PageIndex * Model.PageSize, Model.TotalItems)) 
+                    de @Model.TotalItems registros
+                </div>
+                <div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-list me-1"></i>Itens: @Model.PageSize
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item @(Model.PageSize == 5 ? "active" : "")" asp-action="Index" asp-route-pageSize="5" asp-route-searchTerm="@Model.SearchTerm">5 itens</a></li>
+                            <li><a class="dropdown-item @(Model.PageSize == 10 ? "active" : "")" asp-action="Index" asp-route-pageSize="10" asp-route-searchTerm="@Model.SearchTerm">10 itens</a></li>
+                            <li><a class="dropdown-item @(Model.PageSize == 20 ? "active" : "")" asp-action="Index" asp-route-pageSize="20" asp-route-searchTerm="@Model.SearchTerm">20 itens</a></li>
+                            <li><a class="dropdown-item @(Model.PageSize == 50 ? "active" : "")" asp-action="Index" asp-route-pageSize="50" asp-route-searchTerm="@Model.SearchTerm">50 itens</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Paginação de clientes" class="mt-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" 
+                               asp-action="Index" 
+                               asp-route-pageIndex="@(Model.PageIndex - 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        @{
+                            int startPage = Math.Max(1, Model.PageIndex - 2);
+                            int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                            
+                            if (endPage - startPage < 4 && startPage > 1)
+                            {
+                                startPage = Math.Max(1, endPage - 4);
+                            }
+                        }
+                        
+                        @for (int i = startPage; i <= endPage; i++)
+                        {
+                            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                                <a class="page-link" 
+                                   asp-action="Index" 
+                                   asp-route-pageIndex="@i"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-searchTerm="@Model.SearchTerm">
+                                    @i
+                                </a>
+                            </li>
+                        }
+                        
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" 
+                               asp-action="Index" 
+                               asp-route-pageIndex="@(Model.PageIndex + 1)"
+                               asp-route-pageSize="@Model.PageSize"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               aria-label="Próximo">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o cliente <strong id="customerName"></strong>?</p>
+                <p>Documento: <span id="customerDocument" class="fw-bold"></span></p>
+                <p class="text-danger mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Esta ação não poderá ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" asp-action="Delete" method="post">
+                    <input type="hidden" id="customerId" name="id" />
+                    <button type="submit" class="btn btn-danger">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span>Confirmar Exclusão</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.delete-btn').click(function() {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                const document = $(this).data('document');
+                
+                $('#customerId').val(id);
+                $('#customerName').text(name);
+                $('#customerDocument').text(document);
+            });
+            
+            $('#deleteForm').submit(function() {
+                const btn = $(this).find('button[type="submit"]');
+                const spinner = btn.find('.spinner-border');
+                const text = btn.find('span:not(.spinner-border)');
+                
+                btn.attr('disabled', true);
+                spinner.removeClass('d-none');
+                text.text('Excluindo...');
+            });
+            
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+    </script>
+} 
